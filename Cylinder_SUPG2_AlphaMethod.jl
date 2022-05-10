@@ -5,7 +5,7 @@ using Gridap.CellData
 using Gridap.Arrays
 using LineSearches: BackTracking, Static, MoreThuente
 using FillArrays
-
+using Plots
 """
 Unsteady Cylinder
 add Gridap#generalized_alpha
@@ -37,7 +37,7 @@ initial_condition = true #print model of initial condition
 #ODE settings
 dt = 0.01 
 t0 = 0
-tF = 1000*dt #Define the number of time step. Usually 5-10 for testing
+tF = 200*dt #Define the number of time step. Usually 5-10 for testing
 
 Ntimestep = (tF-t0)/dt #Just to check how many time step
 
@@ -157,6 +157,15 @@ vph0 = interpolate_everywhere(0, P0)
 vxh0 = interpolate_everywhere([vuh0, vph0], X0)
 
 
+#Compute Drag/Lift
+Γ = BoundaryTriangulation(model; tags=["Cylinder","P_cylinder"]) 
+dΓ = Measure(Γ,degree)
+n_Γ = get_normal_vector(Γ) #Check if the direction is inside or outdside the domain; probably a -1 coefficient needed
+F(p) = sum(∫(p⋅n_Γ)dΓ)
+
+
+
+
 ρ∞ = 0.5 #ρ∞=1 no dissipation, ρ∞=1 max dissipation, ρ∞=0.5 quite good 
 ode_solver = GeneralizedAlpha(nls,dt,ρ∞)
 sol_t = solve(ode_solver,op,(xh0,vxh0),t0,tF)
@@ -164,8 +173,14 @@ sol_t = solve(ode_solver,op,(xh0,vxh0),t0,tF)
 
 
 _t_nn = t0
-iteration = 0
-createpvd("TV_2d") do pvd
+iteration = 1
+L = F(ph0)[2] #1 Drag (x direction), 2 Lift (y direction)
+F_cylinder = zeros(3,floor(Int, round(Ntimestep+1))) #time-step, Drag, Lift
+
+
+F_cylinder[:, 1] = [_t_nn, F(ph0)[1], F(ph0)[2]]
+
+createpvd("Cylinder_2d") do pvd
   for (xh_tn, tn) in sol_t
     global _t_nn
     _t_nn += dt
@@ -175,11 +190,16 @@ createpvd("TV_2d") do pvd
     uh_tn = xh_tn[1]
     ph_tn = xh_tn[2]
     ωh_tn = ∇ × uh_tn
-  
+    global F_cylinder
+    F_cylinder[:, iteration] = [_t_nn, F(ph_tn)[1], F(ph_tn)[2]]
+
+
     #if mod(iteration, 10)<1 #Useful when many time-step, reducing the number of file generated
-      pvd[tn] = createvtk(Ω, "Results/TV_2d_$_t_nn" * ".vtu", cellfields=["uh" => uh_tn, "ph" => ph_tn, "wh" => ωh_tn])
+      pvd[tn] = createvtk(Ω, "Results/Cylinder_2d_$_t_nn" * ".vtu", cellfields=["uh" => uh_tn, "ph" => ph_tn, "wh" => ωh_tn])
     #end
   end
 
 end
+
+#plt = plot(title="Unsteady Cylinder Re = $Re", ylabel="L[N/m]", xlabel="time [s]")
 
