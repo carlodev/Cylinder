@@ -7,7 +7,7 @@ using LineSearches: BackTracking, Static, MoreThuente
 using FillArrays
 
 """
-LidDrivenCavityFlow
+Unsteady Cylinder
 """
 
 #Parameters
@@ -16,8 +16,8 @@ Re = 1000
 St = 0.22
 
 
-ν = 0.001 #0.1 m2/s 
-D = 0.1 #2 [m] cylinder diameter
+ν = 0.001 #0.001 m2/s 
+D = 0.1 # [m] cylinder diameter
 p0 = 0
 
 order = 1 #Order of pressure and velocity
@@ -49,7 +49,7 @@ labels = get_face_labeling(model)
 
 
 
-#u_free(x,t) = VectorValue(4*umax/0.41^2*(0.205^2 - x[2]^2),0)
+#u_free(x,t) = VectorValue(4*umax/0.41^2*(0.205^2 - x[2]^2),0) #parabolic inlet
 u_free(x,t) = VectorValue(u0,0)
 u_free(t::Real) = x -> u_free(x,t)
 
