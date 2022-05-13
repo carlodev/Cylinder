@@ -6,6 +6,11 @@ using Gridap.Arrays
 using LineSearches: BackTracking, Static, MoreThuente
 using FillArrays
 using Plots
+
+using Statistics
+using JLD2
+
+
 """
 Unsteady Cylinder
 add Gridap#generalized_alpha
@@ -22,6 +27,8 @@ St = 0.22 #approximately
 
 
 ν = 0.001 #0.001 m2/s 
+ρ = 1 #1 kg/m3, not in the equations, just for Computing μ
+
 D = 0.1 # [m] cylinder diameter
 p0 = 0
 
@@ -35,9 +42,9 @@ dtmin = 1/f
 initial_condition = true #print model of initial condition
 
 #ODE settings
-dt = 0.01 
+dt = 0.005 
 t0 = 0
-tF = 200*dt #Define the number of time step. Usually 5-10 for testing
+tF = 2.5 #Define the number of time step. Usually 5-10 for testing
 
 Ntimestep = (tF-t0)/dt #Just to check how many time step
 
@@ -163,7 +170,10 @@ dΓ = Measure(Γ,degree)
 n_Γ = get_normal_vector(Γ) #Check if the direction is inside or outdside the domain; probably a -1 coefficient needed
 F(p) = sum(∫(p⋅n_Γ)dΓ)
 
+μ = ρ*ν
+Friction(∇u) = μ*sum(∫(∇u⋅n_Γ)dΓ) #should be equivalent to ∂(u)/∂(n)
 
+Friction(∇(uh0)) 
 
 
 ρ∞ = 0.5 #ρ∞=1 no dissipation, ρ∞=1 max dissipation, ρ∞=0.5 quite good 
@@ -175,10 +185,11 @@ sol_t = solve(ode_solver,op,(xh0,vxh0),t0,tF)
 _t_nn = t0
 iteration = 1
 L = F(ph0)[2] #1 Drag (x direction), 2 Lift (y direction)
-F_cylinder = zeros(3,floor(Int, round(Ntimestep+1))) #time-step, Drag, Lift
+F_cylinder = zeros(5,floor(Int, round(Ntimestep+1))) #time-step, Drag, Lift, Friction (x direction), Friction (y direction) 
 
 
-F_cylinder[:, 1] = [_t_nn, F(ph0)[1], F(ph0)[2]]
+F_cylinder[:, 1] = [_t_nn, F(ph0)[1], F(ph0)[2], Friction(∇(uh0))[1], Friction(∇(uh0))[2]]
+
 
 createpvd("Cylinder_2d") do pvd
   for (xh_tn, tn) in sol_t
@@ -191,7 +202,7 @@ createpvd("Cylinder_2d") do pvd
     ph_tn = xh_tn[2]
     ωh_tn = ∇ × uh_tn
     global F_cylinder
-    F_cylinder[:, iteration] = [_t_nn, F(ph_tn)[1], F(ph_tn)[2]]
+    F_cylinder[:, iteration] = [_t_nn, F(ph_tn)[1], F(ph_tn)[2], Friction(∇(uh_tn))[1], Friction(∇(uh_tn))[2]]
 
 
     #if mod(iteration, 10)<1 #Useful when many time-step, reducing the number of file generated
@@ -200,6 +211,5 @@ createpvd("Cylinder_2d") do pvd
   end
 
 end
-
-#plt = plot(title="Unsteady Cylinder Re = $Re", ylabel="L[N/m]", xlabel="time [s]")
+@save "Cylinder_Re_$Re.jld2" F_cylinder
 
