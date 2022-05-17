@@ -176,7 +176,7 @@ Friction(∇u) = μ*sum(∫(∇u⋅n_Γ)dΓ) #should be equivalent to ∂(u)/∂
 Friction(∇(uh0)) 
 
 
-ρ∞ = 0.5 #ρ∞=1 no dissipation, ρ∞=1 max dissipation, ρ∞=0.5 quite good 
+ρ∞ = 0.5 #ρ∞=1 no dissipation, ρ∞=0 max dissipation, ρ∞=0.5 quite good 
 ode_solver = GeneralizedAlpha(nls,dt,ρ∞)
 sol_t = solve(ode_solver,op,(xh0,vxh0),t0,tF)
 
