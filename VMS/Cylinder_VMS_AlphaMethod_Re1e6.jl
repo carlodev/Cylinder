@@ -23,16 +23,18 @@ add Gridap#generalized_alpha
 
 Parabolic inlet value taken from "A cell-based smoothed finite element method stabilized by implicit SUPG/SPGP/Fractional step
 method for incompressible flow", Mingyang, Guanjun, Huifen, Chen
+
+VMS formulation based on bazilevs  
 """
 
 #Parameters
 
-Re = 1e3
+Re = 1e6
 
 St = 0.22 #approximately
 
 
-ν = 0.001 #0.001 m2/s 
+ν = 0.000001 #0.001 m2/s 
 ρ = 1 #1 kg/m3, not in the equations, just for Computing μ
 
 D = 0.1 # [m] cylinder diameter
@@ -49,7 +51,10 @@ dtmin = 1/f
 initial_condition = false #print model of initial condition
 
 #ODE settings #dt is 1/10 of the extimated period of the vortex shedding; total number of timestep 2000
-dt = ceil(dtmin/0.0001) * 0.0001/10 
+#dt = ceil(dtmin/0.0001) * 0.0001/10 
+#dt small to ensure CFL<1, the problem is more unstable at high reynolds. At low Re (1000) it tolerates a CFL>1, not at 1e6
+dt = 0.0001
+
 t0 = 0
 tF = 2000*dt #Define the number of time step. Usually 5-10 for testing
 
@@ -155,13 +160,20 @@ end
 gg
 
 h = lazy_map(h->h^(1/2),get_cell_measure(Ω))
-CFL = u0*dt/minimum(h)
+
+#CFL = u0*dt/minimum(h)
+#Function for computing an element-wise CFL, to check approximately if <1
+function compute_CFL(u,h)
+  u = norm(u)
+    return u*dt/h
+  
+end
 
 #NO CFL correction, try with and without
 
 function τm(uu,G,GG)
   Cᵢ = 1
-  τ₁ = Cᵢ * (4/dt)^2 
+
   τ₃ = (ν^2 *GG)
   val(x) = x
   function val(x::Gridap.Fields.ForwardDiff.Dual)
@@ -175,10 +187,10 @@ function τm(uu,G,GG)
   uu_new = VectorValue(uu1,uu2)
   
 
-  if iszero(norm(uu_new)) #you can try if norm(u)<1e-5 or similar
-      return (τ₁ .+ τ₃).^(-1/2)      
+  if norm(uu_new) < 0.00001 #you can try if norm(u)<1e-5 or similar
+      return (τ₃).^(-1/2)      
   end
-
+  τ₁ = Cᵢ * (20/dt)^2 #add this 20 factor as STABILIZATION corrections, to be verified
   τ₂ = uu_new⋅G⋅uu_new
   return (τ₁ .+  τ₂ .+ τ₃).^(-1/2)     
 
@@ -217,6 +229,9 @@ vuh0 = interpolate_everywhere(VectorValue(0,0), U0)
 vph0 = interpolate_everywhere(0, P0)
 vxh0 = interpolate_everywhere([vuh0, vph0], X0)
 
+#Check the initial CFL
+CFL = compute_CFL∘(interpolate_everywhere(VectorValue(u0,0), U0),h)
+writevtk(Ω, "CFL", cellfields=["CFL" => CFL])
 
 #Compute Drag/Lift
 Γ = BoundaryTriangulation(model; tags=["Cylinder","P_cylinder"]) 

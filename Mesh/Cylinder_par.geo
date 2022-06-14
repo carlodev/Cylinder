@@ -176,13 +176,13 @@ Physical Surface("Fluid", 29) = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 //+
 Recombine Surface {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 //+
-Transfinite Curve {15, 2, 1, 4, 3, 12, 9, 6} = 21 Using Progression 1;
+Transfinite Curve {15, 2, 1, 4, 3, 12, 9, 6} = 41 Using Progression 1;
 //+
-Transfinite Curve {14, 21, 22, 10, 8, 23, 24, 16} = 21 Using Progression 0.95;
+Transfinite Curve {14, 21, 22, 10, 8, 23, 24, 16} = 51 Using Progression 0.95;
 //+
 Transfinite Curve {13, 18, 17, 5} = 11 Using Progression 0.95;
 //+
-Transfinite Curve {11, 19, 20, 7} = 71 Using Progression 0.98;
+Transfinite Curve {11, 19, 20, 7} = 111 Using Progression 0.98;
 //+
 Transfinite Surface {1};
 //+
@@ -208,9 +208,9 @@ Transfinite Surface {11};
 //+
 Transfinite Surface {12};
 //+
-Transfinite Curve {2, 1, 4, 3, 27, 28, 25, 26} = 21 Using Progression 1;
+Transfinite Curve {2, 1, 4, 3, 27, 28, 25, 26} = 41 Using Progression 1;
 //+
-Transfinite Curve {29, 30, 31, 32} = 40 Using Progression 1.1;
+Transfinite Curve {29, 30, 31, 32} = 60 Using Progression 1.1;
 
 
 
